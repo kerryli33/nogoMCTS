@@ -1,5 +1,5 @@
-#!/usr/local/bin/python3
-#/usr/bin/python3
+#!/usr/bin/python3
+#/usr/local/bin/python3
 # Set the path to your python3 above
 
 from gtp_connection import GtpConnection, point_to_coord, format_point
@@ -13,7 +13,7 @@ import sys
 
 
 class Nogo():
-    def __init__(self, sim, move_select, sim_rule, move_filter, size=7, limit=100):
+    def __init__(self, sim=10, move_select="simple", sim_rule="random", size=7, limit=100):
         """
         Passe/resigns only at the end of game.
 
@@ -25,32 +25,31 @@ class Nogo():
         self.use_ucb = False if move_select =='simple' else True
         self.random_simulation = True if sim_rule == 'random' else False
         self.use_pattern = not self.random_simulation
-        self.check_selfatari = move_filter
         
     def get_move(self, board, color):
-            """
-            Run one-ply MC simulations to get a move to play.
-            """
-            cboard = board.copy()
-            emptyPoints = board.get_empty_points()
-            moves = []
-            for p in emptyPoints:
-                if board.is_legal(p, color):
-                    moves.append(p)
-            if not moves:
-                return None
-            moves.append(None)
-            if self.use_ucb:
-                C = 0.4 #sqrt(2) is safe, this is more aggressive
-                best = runUcb(self, cboard, C, moves, color)
-                return best
-            else:
-                moveWins = []
-                for move in moves:
-                    wins = self.simulateMove(cboard, move, color)
-                    moveWins.append(wins)
-                writeMoves(cboard, moves, moveWins, self.sim)
-                return select_best_move(board, moves, moveWins)
+        """
+        Run one-ply MC simulations to get a move to play.
+        """
+        cboard = board.copy()
+        empty_points = board.get_empty_points()
+        moves = [ p for p in empty_points if board.is_legal( p , color ) ]
+        # for p in empty_points:
+        #     if board.is_legal(p, color):
+        #         moves.append(p)
+        if not moves:
+            return None
+        moves.append(None)
+        if self.use_ucb:
+            C = 0.4 #sqrt(2) is safe, this is more aggressive
+            best = runUcb(self, cboard, C, moves, color)
+            return best
+        else:
+            moveWins = []
+            for move in moves:
+                wins = self.simulateMove(cboard, move, color)
+                moveWins.append(wins)
+            writeMoves(cboard, moves, moveWins, self.sim)
+            return select_best_move(board, moves, moveWins)
         
     def simulateMove(self, board, move, toplay):
         """
@@ -72,14 +71,13 @@ class Nogo():
                                     komi=self.komi,
                                     limit=self.limit,
                                     random_simulation = self.random_simulation,
-                                    use_pattern = self.use_pattern,
-                                    check_selfatari = self.check_selfatari)
+                                    use_pattern = self.use_pattern)
 def run():
     """
     start the gtp connection and wait for commands.
     """
     board = SimpleGoBoard(7)
-    con = GtpConnection(Nogo(), board)
+    con = GtpConnection(Nogo(), board, )
     con.start_connection()
 
 def byPercentage(pair):

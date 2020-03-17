@@ -12,5 +12,8 @@ class Weights:
         with open("weights") as f:
             for line in f:
                 ( k , v ) = line.split()
-                d[ int(key) ] = v
+                d[ int(k) ] = float(v)
         return d
+    
+    def get(self, code):
+        return self.table.get(code, -1)

@@ -12,6 +12,7 @@ from board_util import GoBoardUtil, BLACK, WHITE, EMPTY, BORDER, PASS, \
                        MAXSIZE, coord_to_point
 import numpy as np
 import re
+from pattern_util import PatternUtil
 
 class GtpConnection():
 
@@ -49,7 +50,11 @@ class GtpConnection():
             "gogui-rules_side_to_move": self.gogui_rules_side_to_move_cmd,
             "gogui-rules_board": self.gogui_rules_board_cmd,
             "gogui-rules_final_result": self.gogui_rules_final_result_cmd,
-            "gogui-analyze_commands": self.gogui_analyze_cmd
+            "gogui-analyze_commands": self.gogui_analyze_cmd,
+            "policy": self.policy_cmd,
+            "selection": self.selection_cmd,
+            "policy_moves": self.policy_moves_cmd,
+            "num_sim": self.num_sim_cmd
         }
 
         # used for argument checking
@@ -61,7 +66,10 @@ class GtpConnection():
             "known_command": (1, 'Usage: known_command CMD_NAME'),
             "genmove": (1, 'Usage: genmove {w,b}'),
             "play": (2, 'Usage: play {b,w} MOVE'),
-            "legal_moves": (1, 'Usage: legal_moves {w,b}')
+            "legal_moves": (1, 'Usage: legal_moves {w,b}'),
+            "policy": (1, 'Usage: policy POLICYTYPE'),
+            "selection": (1, 'Usage: selection SELECTIONTYPE'),
+            "num_sim": (1, 'Usage: num_sim INT')
         }
     
     def write(self, data):
@@ -336,6 +344,59 @@ class GtpConnection():
                      "pstring/Rules GameID/gogui-rules_game_id\n"
                      "pstring/Show Board/gogui-rules_board\n"
                      )
+    def policy_cmd(self, args):
+        if ( args[0] == "random" ):
+            self.go_engine.random_simulation = True
+            self.go_engine.use_pattern = False
+        elif ( args[0] == "pattern" ):
+            self.go_engine.random_simulation = False
+            self.go_engine.use_pattern = False
+        else:
+            self.respond("policies are 'random' or 'pattern'")
+        self.respond()
+
+    def selection_cmd(self, args):
+        if ( args[0] == "rr" ):
+            self.go_engine.use_ucb = False
+        elif ( args[0] == "ucb" ):
+            self.go_engine.use_ucb = True
+        else:
+            self.respond("selections are 'rr' (round robin) or 'ucb' (upper confidance bound")
+        self.respond()
+
+
+    def num_sim_cmd(self, args):
+        self.go_engine.sim = int(args[0])
+        self.respond()
+    
+    def policy_moves_cmd(self, args):
+        moves = []
+        probs = []
+        if self.go_engine.random_simulation:
+            color = self.board.current_player
+            empty_pts = self.board.get_empty_points()
+            legal_pts = [move for move in empty_pts if self.board.is_legal( move, color)]
+            probs = [ str(round(1 / len(legal_pts), 3)) for _ in range( len(legal_pts) ) ]
+
+            for mv in legal_pts:
+                coord = point_to_coord( mv , self.board.size )
+                moves.append( format_point(coord).lower() )
+            mv_str = ' '.join( sorted(moves) )
+            prob_str = ' '.join( probs )
+            self.respond( mv_str + " " + prob_str)
+        else:
+            m = PatternUtil.generate_pattern_moves( self.board )
+            self.respond(str(m))
+            mvs, vals = PatternUtil.calc_probabilities( m )
+            # print(len(mvs) , len(vals))
+            for mv in mvs:
+                coord = point_to_coord( mv , self.board.size )
+                moves.append( format_point(coord).lower() ) 
+            sorted_mvs, sorted_vals = (list(i) for i in zip(*sorted(zip(moves,vals))))
+            probs = [ str(round( num , 3)) for num in sorted_vals ]
+            mvs_str = ' '.join( sorted_mvs )
+            sorted_vals = ' '.join( probs )
+            self.respond( mvs_str + " " + sorted_vals)
 
 def point_to_coord(point, boardsize):
     """

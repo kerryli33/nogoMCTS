@@ -77,6 +77,8 @@ class SimpleGoBoard(object):
         self._initialize_empty_points(self.board)
         self._initialize_neighbors()
         self.pattern_table = Weights()
+        self.last_move = None
+        self.last2_move = None
 
 
     def copy(self):
@@ -268,6 +270,8 @@ class SimpleGoBoard(object):
         if in_enemy_eye and len(single_captures) == 1:
             self.ko_recapture = single_captures[0]
         self.current_player = GoBoardUtil.opponent(color)
+        self.last2_move = self.last_move
+        self.last_move = point
         return True
 
     def neighbors_of_color(self, point, color):
@@ -314,6 +318,21 @@ class SimpleGoBoard(object):
         row, col = divmod(point, self.NS)
         return row, col
 
+    def last_moves_empty_neighbors(self):
+        """
+        Get the neighbors of last_move and second last move.
+
+        Returns
+        -------
+        points :
+        points which are neighbors of last_move and last2_move
+        """
+        nb_list = []
+        for c in self.last_move, self.last2_move:
+            if c is None:  continue
+            nb_of_c_list = list(self._neighbors(c) + self._diag_neighbors(c))
+            nb_list += [d for d in nb_of_c_list if self.board[d] == EMPTY and d not in nb_list]
+        return nb_list
     # def is_legal_gomoku(self, point, color):
     #     """
     #         Check whether it is legal for color to play on point, for the game of gomoku
