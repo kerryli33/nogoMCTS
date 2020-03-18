@@ -33,9 +33,6 @@ class Nogo():
         cboard = board.copy()
         empty_points = board.get_empty_points()
         moves = [ p for p in empty_points if board.is_legal( p , color ) ]
-        # for p in empty_points:
-        #     if board.is_legal(p, color):
-        #         moves.append(p)
         if not moves:
             return None
         moves.append(None)
@@ -48,7 +45,7 @@ class Nogo():
             for move in moves:
                 wins = self.simulateMove(cboard, move, color)
                 moveWins.append(wins)
-            writeMoves(cboard, moves, moveWins, self.sim)
+            # writeMoves(cboard, moves, moveWins, self.sim)
             return select_best_move(board, moves, moveWins)
         
     def simulateMove(self, board, move, toplay):
@@ -56,7 +53,8 @@ class Nogo():
         Run simulations for a given move.
         """
         wins = 0
-        for _ in range(self.sim):
+        for i in range(self.sim):
+            # print("Simulation {}".format(i))
             result = self.simulate(board, move, toplay)
             if result == toplay:
                 wins += 1
@@ -68,10 +66,11 @@ class Nogo():
         opp = GoBoardUtil.opponent(toplay)
         return PatternUtil.playGame(cboard,
                                     opp,
-                                    komi=self.komi,
                                     limit=self.limit,
                                     random_simulation = self.random_simulation,
                                     use_pattern = self.use_pattern)
+
+
 def run():
     """
     start the gtp connection and wait for commands.
@@ -109,3 +108,26 @@ def select_best_move(board, moves, moveWins):
 
 if __name__=='__main__':
     run()
+
+def parse_args():
+    """
+        Parse the arguments of the program.
+        """
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--sim', type=int, default=10, help='number of simulations per move, so total playouts=sim*legal_moves')
+    parser.add_argument('--moveselect', type=str, default='simple', help='type of move selection: simple or ucb')
+    parser.add_argument('--simrule', type=str, default='random', help='type of simulation policy: random or rulebased')
+    parser.add_argument('--movefilter', action='store_true', default=False, help='whether use move filter or not')
+
+    args = parser.parse_args()
+    sim = args.sim
+    move_select = args.moveselect
+    sim_rule = args.simrule
+    move_filter = args.movefilter
+
+    if move_select != "simple" and move_select != "ucb":
+        print('moveselect must be simple or ucb')
+        sys.exit(0)
+    if sim_rule != "random" and sim_rule != "rulebased":
+        print('simrule must be random or rulebased')
+        sys.exit(0)

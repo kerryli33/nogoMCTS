@@ -259,7 +259,7 @@ class GtpConnection():
         color = color_to_int(board_color)
         move = self.go_engine.get_move(self.board, color)
         move_coord = point_to_coord(move, self.board.size)
-        move_as_string = format_point(move_coord)
+        move_as_string = format_point(move_coord).lower()
         if self.board.is_legal(move, color):
             self.board.play_move(move, color)
             self.respond(move_as_string)
@@ -386,14 +386,14 @@ class GtpConnection():
             self.respond( mv_str + " " + prob_str)
         else:
             m = PatternUtil.generate_pattern_moves( self.board )
-            self.respond(str(m))
             mvs, vals = PatternUtil.calc_probabilities( m )
-            # print(len(mvs) , len(vals))
             for mv in mvs:
                 coord = point_to_coord( mv , self.board.size )
                 moves.append( format_point(coord).lower() ) 
+            # print(len(mvs) , len(vals))
             sorted_mvs, sorted_vals = (list(i) for i in zip(*sorted(zip(moves,vals))))
             probs = [ str(round( num , 3)) for num in sorted_vals ]
+            # self.respond(str(vals))
             mvs_str = ' '.join( sorted_mvs )
             sorted_vals = ' '.join( probs )
             self.respond( mvs_str + " " + sorted_vals)

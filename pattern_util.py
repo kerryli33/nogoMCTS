@@ -21,17 +21,32 @@ class PatternUtil(object):
                      point+board.NS-1, point+board.NS, point+board.NS+1]
         code = 0
         j = 0
+        # p1 = [ board.board[positions[p]] for p in range(3)]
+        # p2 = [ board.board[positions[p]] for p in range(3,6)]
+        # p3 = [ board.board[positions[p]] for p in range(6,9)]
+        # print( str(p1) + "\n" + str(p2) + "\n" + str(p3) + "\n")
+            # for j in range(3):
+            #     print( p[j])
+        curr = board.current_player
+        flip = [ 0 , 0 ] if curr == BLACK else [ 1, -1 ]
         for i in range (9):
             if i == 4:
+                j = i
                 continue
             else:
-                pos = board.board[positions[j]]
-                if pos == board.current_player:
-                    code += (1 * pow( 4 , j ))
-                elif pos == GoBoardUtil.opponent(board.current_player):
-                    code += (2 * pow( 4 , j ))
+                pos = board.board[positions[i]]
+                if pos == curr:
+
+                    # print("1\t", str(i), str(j), str( ( 1 * pow( 4 , j ))))
+                    code += ( 1 * pow( 4 , j ))
+                elif pos == GoBoardUtil.opponent(curr):
+                    # print("2\t", str(i), str(j), str( ( 2 * pow( 4 , j ))))
+                    code += ( 2 * pow( 4 , j ))
                 elif pos == BORDER:
-                    code += (3 * pow( 4 , j ))
+                    code += ( 3 * pow( 4 , j ))
+                    # print("3\t", str(i), str(j), str( ( 3 * pow( 4 , j ))))
+                # else:
+                    # print("0\t", str(i)), str(j)
                 j += 1
         return code
     
@@ -46,12 +61,12 @@ class PatternUtil(object):
         # pattern_checking_set = board.last_moves_empty_neighbors()
         empty_pts = board.get_empty_points()
         legal_mvs = [ move for move in empty_pts if board.is_legal( move , color ) ]
-
+        print("num of mvs: {}".format(len(legal_mvs)))
         moves = {}
         for p in legal_mvs:
             code = PatternUtil.neighborhood_33(board, p)
             value = board.pattern_table.get(code)
-            print(code)
+            # print(code)
             if ( value != -1 and value != "1.0"):
                 assert p not in moves
                 assert board.board[p] == EMPTY
@@ -100,7 +115,6 @@ class PatternUtil(object):
         """
         Run a simulation game according to give parameters.
         """
-        # komi = kwargs.pop('komi', 0)
         limit = kwargs.pop('limit', 1000)
         random_simulation = kwargs.pop('random_simulation',True)
         use_pattern = kwargs.pop('use_pattern',True)
@@ -111,7 +125,7 @@ class PatternUtil(object):
             if random_simulation:
                 move = GoBoardUtil.generate_random_move(board,color,False)
             else:
-                move = PatternUtil.generate_move_with_filter(board,use_pattern,check_selfatari)
+                move = PatternUtil.generate_move(board,use_pattern)
             if move == PASS:
                 break
             board.play_move(move, color)
