@@ -10,9 +10,10 @@ import traceback
 from sys import stdin, stdout, stderr
 from board_util import GoBoardUtil, BLACK, WHITE, EMPTY, BORDER, PASS, \
                        MAXSIZE, coord_to_point
+from pattern_util import PatternUtil
+from weights import Weights
 import numpy as np
 import re
-from pattern_util import PatternUtil
 
 class GtpConnection():
 
@@ -30,6 +31,7 @@ class GtpConnection():
         self._debug_mode = debug_mode
         self.go_engine = go_engine
         self.board = board
+        self.pattern_table = Weights()
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -257,7 +259,7 @@ class GtpConnection():
         """
         board_color = args[0].lower()
         color = color_to_int(board_color)
-        move = self.go_engine.get_move(self.board, color)
+        move = self.go_engine.get_move(self.board, color, self.pattern_table)
         move_coord = point_to_coord(move, self.board.size)
         move_as_string = format_point(move_coord).lower()
         if self.board.is_legal(move, color):
@@ -385,15 +387,15 @@ class GtpConnection():
             prob_str = ' '.join( probs )
             self.respond( mv_str + " " + prob_str)
         else:
-            m = PatternUtil.generate_pattern_moves( self.board )
+            
+            m = PatternUtil.generate_pattern_moves( self.board , self.pattern_table)
             mvs, vals = PatternUtil.calc_probabilities( m )
             for mv in mvs:
                 coord = point_to_coord( mv , self.board.size )
                 moves.append( format_point(coord).lower() ) 
-            # print(len(mvs) , len(vals))
+
             sorted_mvs, sorted_vals = (list(i) for i in zip(*sorted(zip(moves,vals))))
             probs = [ str(round( num , 3)) for num in sorted_vals ]
-            # self.respond(str(vals))
             mvs_str = ' '.join( sorted_mvs )
             sorted_vals = ' '.join( probs )
             self.respond( mvs_str + " " + sorted_vals)

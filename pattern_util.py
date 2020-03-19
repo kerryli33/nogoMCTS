@@ -51,7 +51,7 @@ class PatternUtil(object):
         return code
     
     @staticmethod
-    def generate_pattern_moves(board):
+    def generate_pattern_moves(board, table):
         """
         Generate a list of moves that match pattern.
         This only checks moves that are neighbors of the moves in the last two steps.
@@ -61,11 +61,12 @@ class PatternUtil(object):
         # pattern_checking_set = board.last_moves_empty_neighbors()
         empty_pts = board.get_empty_points()
         legal_mvs = [ move for move in empty_pts if board.is_legal( move , color ) ]
-        print("num of mvs: {}".format(len(legal_mvs)))
+        # print("num of mvs: {}".format(len(legal_mvs)))
         moves = {}
         for p in legal_mvs:
             code = PatternUtil.neighborhood_33(board, p)
-            value = board.pattern_table.get(code)
+            # value = board.pattern_table.get(code)
+            value = table.get(code)
             # print(code)
             if ( value != -1 and value != "1.0"):
                 assert p not in moves
@@ -74,7 +75,7 @@ class PatternUtil(object):
         return moves
 
     @staticmethod
-    def generate_move(board, use_pattern):
+    def generate_move(board, use_pattern, table):
         """
         Arguments
         ---------
@@ -83,7 +84,7 @@ class PatternUtil(object):
         """
         move = None
         if use_pattern:
-            moves = PatternUtil.generate_pattern_moves(board)
+            moves = PatternUtil.generate_pattern_moves(board, table)
             mvs , vals = PatternUtil.calc_probabilities(board, moves)
             move = np.random.choice(mvs, len(mvs), vals)
 
@@ -118,6 +119,7 @@ class PatternUtil(object):
         limit = kwargs.pop('limit', 1000)
         random_simulation = kwargs.pop('random_simulation',True)
         use_pattern = kwargs.pop('use_pattern',True)
+        table = kwargs.pop('table', True)
         if kwargs:
             raise TypeError('Unexpected **kwargs: %r' % kwargs)
         for _ in range(limit):
@@ -125,7 +127,7 @@ class PatternUtil(object):
             if random_simulation:
                 move = GoBoardUtil.generate_random_move(board,color,False)
             else:
-                move = PatternUtil.generate_move(board,use_pattern)
+                move = PatternUtil.generate_move(board,use_pattern, table)
             if move == PASS:
                 break
             board.play_move(move, color)

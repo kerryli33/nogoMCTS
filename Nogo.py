@@ -7,6 +7,7 @@ from board_util import GoBoardUtil
 from simple_board import SimpleGoBoard
 from pattern_util import PatternUtil
 from ucb import runUcb
+from weights import Weights
 import numpy as np
 import argparse
 import sys
@@ -26,7 +27,7 @@ class Nogo():
         self.random_simulation = True if sim_rule == 'random' else False
         self.use_pattern = not self.random_simulation
         
-    def get_move(self, board, color):
+    def get_move(self, board, color, table):
         """
         Run one-ply MC simulations to get a move to play.
         """
@@ -38,29 +39,27 @@ class Nogo():
         moves.append(None)
         if self.use_ucb:
             C = 0.4 #sqrt(2) is safe, this is more aggressive
-            best = runUcb(self, cboard, C, moves, color)
+            best = runUcb(self, cboard, C, moves, color, table)
             return best
         else:
             moveWins = []
             for move in moves:
-                wins = self.simulateMove(cboard, move, color)
+                wins = self.simulateMove(cboard, move, color, table)
                 moveWins.append(wins)
-            # writeMoves(cboard, moves, moveWins, self.sim)
             return select_best_move(board, moves, moveWins)
         
-    def simulateMove(self, board, move, toplay):
+    def simulateMove(self, board, move, toplay, table):
         """
         Run simulations for a given move.
         """
         wins = 0
         for i in range(self.sim):
-            # print("Simulation {}".format(i))
-            result = self.simulate(board, move, toplay)
+            result = self.simulate(board, move, toplay, table)
             if result == toplay:
                 wins += 1
         return wins
 
-    def simulate(self, board, move, toplay):
+    def simulate(self, board, move, toplay, table):
         cboard = board.copy()
         cboard.play_move(move, toplay)
         opp = GoBoardUtil.opponent(toplay)
@@ -68,7 +67,8 @@ class Nogo():
                                     opp,
                                     limit=self.limit,
                                     random_simulation = self.random_simulation,
-                                    use_pattern = self.use_pattern)
+                                    use_pattern = self.use_pattern,
+                                    table= table)
 
 
 def run():

@@ -5,8 +5,9 @@ class Weights:
     def __init__(self):
         self.table = self.init_table()
         
-
-
+    def __len__(self):
+        return len(self.table) 
+        
     def init_table(self):
         d = {}
         with open("weights") as f:

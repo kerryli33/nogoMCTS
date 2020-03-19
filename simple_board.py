@@ -76,7 +76,7 @@ class SimpleGoBoard(object):
         self.liberty_of = np.full(self.maxpoint, NULLPOINT, dtype = np.int32)
         self._initialize_empty_points(self.board)
         self._initialize_neighbors()
-        self.pattern_table = Weights()
+        # self.pattern_table = Weights()
         self.last_move = None
         self.last2_move = None
 
